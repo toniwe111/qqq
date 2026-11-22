@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Mini App</title>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+          <style>
+              body {
+                    font-family: system-ui, sans-serif;
+                          background: #111;
+                                color: #fff;
+                                      display: flex;
+                                            flex-direction: column;
+                                                  align-items: center;
+                                                        justify-content: center;
+                                                              min-height: 100vh;
+                                                                    margin: 0;
+                                                                          padding: 20px;
+                                                                                text-align: center;
+                                                                                    }
+                                                                                        button {
+                                                                                              padding: 14px 24px;
+                                                                                                    font-size: 16px;
+                                                                                                          border: 0;
+                                                                                                                border-radius: 10px;
+                                                                                                                      background: #2ea6ff;
+                                                                                                                            color: #fff;
+                                                                                                                                  cursor: pointer;
+                                                                                                                                      }
+                                                                                                                                          #box { display: none; }
+                                                                                                                                            </style>
+                                                                                                                                            </head>
+                                                                                                                                            <body>
+                                                                                                                                              <div id="denied">⛔ Доступ закрыт. Нужна верная ссылка с ключом.</div>
+
+                                                                                                                                                <div id="box">
+                                                                                                                                                    <h2>Панель кодов</h2>
+                                                                                                                                                        <p id="status">Готово к работе</p>
+                                                                                                                                                            <button id="btn">Запросить последний код</button>
+                                                                                                                                                              </div>
+
+                                                                                                                                                                <script>
+                                                                                                                                                                    const SECRET_KEY = "1111"; // Такой же ключ в ссылке из бота
+                                                                                                                                                                        const params = new URLSearchParams(window.location.search);
+                                                                                                                                                                            const key = params.get("key");
+
+                                                                                                                                                                                const tg = window.Telegram && window.Telegram.WebApp;
+                                                                                                                                                                                    if (tg) {
+                                                                                                                                                                                          tg.ready();
+                                                                                                                                                                                                tg.expand();
+                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                        if (key === SECRET_KEY) {
+                                                                                                                                                                                                              document.getElementById("denied").style.display = "none";
+                                                                                                                                                                                                                    document.getElementById("box").style.display = "block";
+                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                            document.getElementById("btn").addEventListener("click", () => {
+                                                                                                                                                                                                                                  document.getElementById("status").textContent = "Запрос отправлен в бота...";
+                                                                                                                                                                                                                                        if (tg && tg.sendData) {
+                                                                                                                                                                                                                                                tg.sendData("get_latest_code");
+                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                          });
+                                                                                                                                                                                                                                                            </script>
+                                                                                                                                                                                                                                                            </body>
+                                                                                                                                                                                                                                                            </html>
+                                                                                                                                                                                                                                                            
