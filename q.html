@@ -2,67 +2,379 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Mini App</title>
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-          <style>
-              body {
-                    font-family: system-ui, sans-serif;
-                          background: #111;
-                                color: #fff;
-                                      display: flex;
-                                            flex-direction: column;
-                                                  align-items: center;
-                                                        justify-content: center;
-                                                              min-height: 100vh;
-                                                                    margin: 0;
-                                                                          padding: 20px;
-                                                                                text-align: center;
-                                                                                    }
-                                                                                        button {
-                                                                                              padding: 14px 24px;
-                                                                                                    font-size: 16px;
-                                                                                                          border: 0;
-                                                                                                                border-radius: 10px;
-                                                                                                                      background: #2ea6ff;
-                                                                                                                            color: #fff;
-                                                                                                                                  cursor: pointer;
-                                                                                                                                      }
-                                                                                                                                          #box { display: none; }
-                                                                                                                                            </style>
-                                                                                                                                            </head>
-                                                                                                                                            <body>
-                                                                                                                                              <div id="denied">⛔ Доступ закрыт. Нужна верная ссылка с ключом.</div>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Панель доступа и кодов</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0e1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+    h1, h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+    p.sub {
+      margin: 0 0 16px;
+      color: #8b949e;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+      background: #0d1117;
+      color: #e6edf3;
+      font-size: 15px;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    input:focus, textarea:focus {
+      border-color: #2f81f7;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: #238636;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.92; }
+    button.btn-blue { background: #1f6feb; }
+    button.btn-gray { background: #30363d; }
+    button.btn-red { background: #da3633; }
+    .err {
+      color: #ff7b72;
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 8px;
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .code-box {
+      background: #0d1117;
+      border: 1px dashed #30363d;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .code-val {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #58a6ff;
+      user-select: all;
+    }
+    .meta {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 6px;
+    }
+    .list {
+      max-height: 190px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .item {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .item strong {
+      font-size: 15px;
+      color: #79c0ff;
+      display: block;
+    }
+    .item small {
+      color: #8b949e;
+      font-size: 11px;
+    }
+    .mini-btn {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #1f2937;
+      color: #3fb950;
+      border: 1px solid #238636;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- ЭКРАН ВХОДА ПО ПАРОЛЮ -->
+    <div id="loginPanel" class="panel active">
+      <h1>Вход в панель</h1>
+      <p class="sub">Введите пароль доступа, чтобы открыть управление и кнопки.</p>
+      <input id="passInput" type="password" placeholder="Пароль (по умолчанию 1111)" autocomplete="off" />
+      <div id="loginErr" class="err"></div>
+      <button id="loginBtn" class="btn-blue">Войти</button>
+    </div>
 
-                                                                                                                                                <div id="box">
-                                                                                                                                                    <h2>Панель кодов</h2>
-                                                                                                                                                        <p id="status">Готово к работе</p>
-                                                                                                                                                            <button id="btn">Запросить последний код</button>
-                                                                                                                                                              </div>
+    <!-- ОСНОВНАЯ ПАНЕЛЬ ПОСЛЕ ВХОДА -->
+    <div id="mainPanel" class="panel">
+      <div class="top-bar">
+        <h2>Панель кодов</h2>
+        <span class="badge" id="tgStatus">WebApp: проверка...</span>
+      </div>
 
-                                                                                                                                                                <script>
-                                                                                                                                                                    const SECRET_KEY = "1111"; // Такой же ключ в ссылке из бота
-                                                                                                                                                                        const params = new URLSearchParams(window.location.search);
-                                                                                                                                                                            const key = params.get("key");
+      <div class="code-box">
+        <div id="latestCode" class="code-val">----</div>
+        <div id="latestMeta" class="meta">Последний код ещё не выбран</div>
+      </div>
 
-                                                                                                                                                                                const tg = window.Telegram && window.Telegram.WebApp;
-                                                                                                                                                                                    if (tg) {
-                                                                                                                                                                                          tg.ready();
-                                                                                                                                                                                                tg.expand();
-                                                                                                                                                                                                    }
+      <div class="row">
+        <button id="copyLatestBtn" class="btn-blue">Копировать код</button>
+        <button id="sendBotBtn">Отправить в бота</button>
+      </div>
 
-                                                                                                                                                                                                        if (key === SECRET_KEY) {
-                                                                                                                                                                                                              document.getElementById("denied").style.display = "none";
-                                                                                                                                                                                                                    document.getElementById("box").style.display = "block";
-                                                                                                                                                                                                                        }
+      <div class="row">
+        <button id="reqCodeBtn" class="btn-gray">Запросить свежий</button>
+        <button id="logoutBtn" class="btn-red">Выйти</button>
+      </div>
 
-                                                                                                                                                                                                                            document.getElementById("btn").addEventListener("click", () => {
-                                                                                                                                                                                                                                  document.getElementById("status").textContent = "Запрос отправлен в бота...";
-                                                                                                                                                                                                                                        if (tg && tg.sendData) {
-                                                                                                                                                                                                                                                tg.sendData("get_latest_code");
-                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                          });
-                                                                                                                                                                                                                                                            </script>
-                                                                                                                                                                                                                                                            </body>
-                                                                                                                                                                                                                                                            </html>
-                                                                                                                                                                                                                                                            
+      <input id="manualCodeInput" type="text" placeholder="Ввести или вставить код вручную..." />
+      <button id="saveCodeBtn" class="btn-blue">Сохранить код в список</button>
+
+      <div class="list" id="codesList"></div>
+    </div>
+  </div>
+
+  <script>
+    const PASS = "1111"; // Пароль входа (можно поменять)
+    const STORAGE_KEY = "tg_panel_codes_v1";
+    const AUTH_KEY = "tg_panel_auth_v1";
+
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const tgStatus = document.getElementById("tgStatus");
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tgStatus.textContent = tg.initDataUnsafe && tg.initDataUnsafe.user
+        ? "TG: @" + (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "user")
+        : "TG WebApp активен";
+    } else {
+      tgStatus.textContent = "Браузер (без TG)";
+    }
+
+    const loginPanel = document.getElementById("loginPanel");
+    const mainPanel = document.getElementById("mainPanel");
+    const passInput = document.getElementById("passInput");
+    const loginErr = document.getElementById("loginErr");
+    const loginBtn = document.getElementById("loginBtn");
+
+    const latestCodeEl = document.getElementById("latestCode");
+    const latestMetaEl = document.getElementById("latestMeta");
+    const manualCodeInput = document.getElementById("manualCodeInput");
+    const codesListEl = document.getElementById("codesList");
+
+    function loadCodes() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCodes(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function showMain() {
+      loginPanel.classList.remove("active");
+      mainPanel.classList.add("active");
+      renderCodes();
+    }
+
+    function showLogin() {
+      mainPanel.classList.remove("active");
+      loginPanel.classList.add("active");
+      passInput.value = "";
+      loginErr.textContent = "";
+    }
+
+    function tryLogin() {
+      const val = passInput.value.trim();
+      if (val === PASS) {
+        sessionStorage.setItem(AUTH_KEY, "1");
+        showMain();
+      } else {
+        loginErr.textContent = "Неверный пароль";
+      }
+    }
+
+    function addCode(rawVal) {
+      const clean = (rawVal || "").trim();
+      if (!clean) return;
+      const list = loadCodes();
+      list.unshift({
+        code: clean,
+        time: new Date().toLocaleString("ru-RU")
+      });
+      saveCodes(list.slice(0, 30));
+      manualCodeInput.value = "";
+      renderCodes();
+    }
+
+    function renderCodes() {
+      const list = loadCodes();
+      if (!list.length) {
+        latestCodeEl.textContent = "----";
+        latestMetaEl.textContent = "Список пуст — добавь код или нажми кнопку";
+        codesListEl.innerHTML = "";
+        return;
+      }
+
+      latestCodeEl.textContent = list[0].code;
+      latestMetaEl.textContent = "Добавлено: " + list[0].time;
+
+      codesListEl.innerHTML = "";
+      list.forEach((item, idx) => {
+        const div = document.createElement("div");
+        div.className = "item";
+
+        const left = document.createElement("div");
+        left.innerHTML = `<strong>${escapeHtml(item.code)}</strong><small>${escapeHtml(item.time)}</small>`;
+
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "mini-btn";
+        copyBtn.textContent = idx === 0 ? "Свежий" : "Копировать";
+        copyBtn.addEventListener("click", () => copyText(item.code));
+
+        div.appendChild(left);
+        div.appendChild(copyBtn);
+        codesListEl.appendChild(div);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function copyText(text) {
+      if (!text || text === "----") return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          latestMetaEl.textContent = "Скопировано: " + text;
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      latestMetaEl.textContent = "Скопировано: " + text;
+    }
+
+    function sendToBot(payloadObj) {
+      const payloadStr = JSON.stringify(payloadObj);
+      if (tg && typeof tg.sendData === "function") {
+        tg.sendData(payloadStr);
+        latestMetaEl.textContent = "Отправлено в бота: " + payloadObj.action;
+      } else {
+        latestMetaEl.textContent = "Открой страницу внутри Telegram Mini App для tg.sendData";
+      }
+    }
+
+    loginBtn.addEventListener("click", tryLogin);
+    passInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") tryLogin();
+    });
+
+    document.getElementById("saveCodeBtn").addEventListener("click", () => {
+      addCode(manualCodeInput.value);
+    });
+
+    document.getElementById("copyLatestBtn").addEventListener("click", () => {
+      copyText(latestCodeEl.textContent);
+    });
+
+    document.getElementById("sendBotBtn").addEventListener("click", () => {
+      sendToBot({ action: "push_code", code: latestCodeEl.textContent });
+    });
+
+    document.getElementById("reqCodeBtn").addEventListener("click", () => {
+      sendToBot({ action: "request_latest_code" });
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem(AUTH_KEY);
+      showLogin();
+    });
+
+    // Поддержка параметра ?code=12345 в ссылке при открытии
+    const urlCode = new URLSearchParams(window.location.search).get("code");
+    if (urlCode) {
+      addCode(urlCode);
+    }
+
+    if (sessionStorage.getItem(AUTH_KEY) === "1") {
+      showMain();
+    }
+  </script>
+</body>
+      </html>
+  
